@@ -37,6 +37,28 @@
 
 #include <Arduino.h>
 #include <U8g2lib.h>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+
+#define DEBUG_NTPClient 1
+
+// WiFi Configuration - use build flags or default values
+#ifndef WIFI_SSID
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#endif
+
+#ifndef WIFI_PASSWORD  
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#endif
+
+#ifndef NTP_SERVER
+#define NTP_SERVER "europe.pool.ntp.org"
+#endif
+
+#ifndef GMT_OFFSET_SEC
+#define GMT_OFFSET_SEC 3600
+#endif
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -49,11 +71,37 @@
 #define PIN_DATA  13
 #define PIN_CS    12
 
-U8G2_MAX7219_32X8_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ PIN_CLOCK, /* data=*/ PIN_DATA, /* cs=*/ PIN_CS, /* dc=*/ U8X8_PIN_NONE, /* reset=*/ U8X8_PIN_NONE);
-
 #define DISPLAY_HEIGHT   8
 #define DISPLAY_WIDTH    8 * 4
-#define DISPLAY_Y_BOTTOM 8
+
+#define DISPLAY_SECONDS_OFFSET (DISPLAY_WIDTH - 30) / 2
+
+U8G2_MAX7219_32X8_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ PIN_CLOCK, /* data=*/ PIN_DATA, /* cs=*/ PIN_CS, /* dc=*/ U8X8_PIN_NONE, /* reset=*/ U8X8_PIN_NONE);
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+
+void wifiInit() {
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  while ( WiFi.status() != WL_CONNECTED ) {
+    delay ( 500 );
+    Serial.print ( "." );
+  }
+}
+
+void checkDisplay(uint16 pause) {
+  Serial.println("checkDisplay");
+
+  for(int16_t bar_pos_x = 0; bar_pos_x <= DISPLAY_WIDTH; bar_pos_x++) {
+    u8g2.clearBuffer();					// clear the internal memory
+    u8g2.drawVLine(bar_pos_x, 0, DISPLAY_HEIGHT); // Vertical line
+    u8g2.sendBuffer();					// transfer internal memory to the display
+
+    bar_pos_x++;
+    delay(pause); 
+  }
+}
 
 void setup(void) {
   Serial.begin(115200);
@@ -70,39 +118,64 @@ void setup(void) {
   u8g2.setContrast(10*1);
   u8g2.setFont(u8g2_font_victoriabold8_8r);	// choose a suitable font
   
-
   Serial.println("Test display");
-
-  u8g2.clearBuffer();					// clear the internal memory
-  u8g2.drawStr(0,7,"U8g2");			// write something to the internal memory
-  u8g2.sendBuffer();					// transfer internal memory to the display
-
-  delay(3000);  
-
-  Serial.println("setup done");
- }
-
-int16_t bar_pos = 0;
-
-void loop(void) {
-  Serial.print("bar pos = ");
-  Serial.println(bar_pos);
-  Serial.println("");
 
   // u8g2.clearBuffer();					// clear the internal memory
   // u8g2.drawStr(0,7,"U8g2");			// write something to the internal memory
   // u8g2.sendBuffer();					// transfer internal memory to the display
 
-  // delay(100);  
+  checkDisplay(100);
 
- // u8g2.clearBuffer();					// clear the internal memory
- //  u8g2.drawVLine(bar_pos, DISPLAY_Y_BOTTOM, DISPLAY_HEIGHT);
- // u8g2.sendBuffer();					// transfer internal memory to the display
+  Serial.println("activating time wifi");
+  u8g2.clearBuffer();
+  u8g2.drawStr(0,7,"WIFI");			// write something to the internal memory
+  u8g2.sendBuffer();
+  wifiInit();
 
-  bar_pos++;
-  if(bar_pos >= DISPLAY_WIDTH) {
-    bar_pos = 0;
+  Serial.println("activating time client");
+  timeClient.begin();
+  timeClient.update();
+
+  Serial.println("setup done");
+ }
+
+String buildTimeDisplay(unsigned long rawTime) {
+  unsigned long hours = (rawTime % 86400L) / 3600;
+  String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+
+  unsigned long minutes = (rawTime % 3600) / 60;
+  String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+
+  return hoursStr + minuteStr;
+}
+
+int16_t increment = 1;
+
+void loop(void) {
+
+  timeClient.update();
+  Serial.println(timeClient.getFormattedTime());
+  
+  // Serial.print("bar pos = ");
+  // Serial.print(bar_pos);
+  // Serial.println("");
+
+  String timeToDisplay = buildTimeDisplay(timeClient.getEpochTime());
+  
+  int16_t bar_pos;
+  int16_t seconds = timeClient.getSeconds();
+  if(seconds>30){
+    bar_pos = DISPLAY_WIDTH - DISPLAY_SECONDS_OFFSET - (seconds-30);
+  }else{
+    bar_pos = DISPLAY_SECONDS_OFFSET + seconds;
   }
-  delay(1000);  
+
+
+  u8g2.clearBuffer();					// clear the internal memory
+  u8g2.drawStr(0,7,timeToDisplay.c_str());			// write something to the internal memory
+  u8g2.drawPixel(bar_pos, DISPLAY_HEIGHT - 1);
+  u8g2.sendBuffer();					// transfer internal memory to the display
+
+  delay(200);  
 }
 
