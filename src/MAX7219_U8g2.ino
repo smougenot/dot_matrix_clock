@@ -71,9 +71,20 @@ NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
 void wifiInit() {
   WiFi.begin(ssid, password);
 
+  uint8_t cpt = 1;
   while ( WiFi.status() != WL_CONNECTED ) {
     delay ( 500 );
     Serial.print ( "." );
+    if(cpt++ % 10 == 0){
+      Serial.print(WiFi.status());
+      if(cpt % 100 == 0){
+        Serial.println();
+        Serial.print("Failed Wifi status : ");
+        Serial.print(WiFi.status());
+        Serial.println();
+        ESP.restart();
+      }
+    }
   }
 }
 
@@ -102,18 +113,13 @@ void setup(void) {
   Serial.println("");
 
   u8g2.begin();
-  u8g2.setContrast(10*1);
+  u8g2.setContrast(5*1);
   u8g2.setFont(u8g2_font_victoriabold8_8r);	// choose a suitable font
   
   Serial.println("Test display");
-
-  // u8g2.clearBuffer();					// clear the internal memory
-  // u8g2.drawStr(0,7,"U8g2");			// write something to the internal memory
-  // u8g2.sendBuffer();					// transfer internal memory to the display
-
   checkDisplay(100);
 
-  Serial.println("activating time wifi");
+  Serial.println("activating wifi");
   u8g2.clearBuffer();
   u8g2.drawStr(0,7,"WIFI");			// write something to the internal memory
   u8g2.sendBuffer();
@@ -136,17 +142,20 @@ String buildTimeDisplay(unsigned long rawTime) {
   return hoursStr + minuteStr;
 }
 
-int16_t increment = 1;
+uint8_t contrast = 0;
+uint8_t increment = 10;
+uint8_t last_seconds = -1;
 
 void loop(void) {
-
+  if(WiFi.status() != WL_CONNECTED) {
+    wifiInit();
+  }
   timeClient.update();
-  Serial.println(timeClient.getFormattedTime());
+  Serial.print(timeClient.getFormattedTime());
+  Serial.print(" contrast ");
+  Serial.print(contrast);
+  Serial.println();
   
-  // Serial.print("bar pos = ");
-  // Serial.print(bar_pos);
-  // Serial.println("");
-
   String timeToDisplay = buildTimeDisplay(timeClient.getEpochTime());
   
   int16_t bar_pos;
@@ -156,13 +165,21 @@ void loop(void) {
   }else{
     bar_pos = DISPLAY_SECONDS_OFFSET + seconds;
   }
+ 
 
-
+  u8g2.setContrast(contrast);
   u8g2.clearBuffer();					// clear the internal memory
   u8g2.drawStr(0,7,timeToDisplay.c_str());			// write something to the internal memory
   u8g2.drawPixel(bar_pos, DISPLAY_HEIGHT - 1);
   u8g2.sendBuffer();					// transfer internal memory to the display
 
+  if(seconds%5 == 0 && last_seconds != seconds){
+    contrast += increment;
+    last_seconds = seconds;
+    if(0== contrast || contrast == 100) {
+      increment = -increment;
+    }
+  }
   delay(200);  
 }
 
