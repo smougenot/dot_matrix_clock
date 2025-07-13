@@ -1,6 +1,7 @@
 # ESP8266 Dot Matrix Project
 
 ![Build PlatformIO project](https://github.com/username/dotMatrix/workflows/build-platformio.yml/badge.svg?branch=master)
+![Super-Linter Light](https://github.com/username/dotMatrix/workflows/super-linter.yml/badge.svg?branch=master)
 
 This project uses an ESP8266 board to control an LED matrix via the MAX7219 module. It is designed to be compiled and uploaded with PlatformIO.
 
