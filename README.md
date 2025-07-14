@@ -104,15 +104,22 @@ This project includes comprehensive security measures to prevent accidental expo
 - **Daily Security Scans**: Scheduled scans to catch any newly introduced secrets
 
 ### Quick Setup
-1. **Install git-leaks locally**:
-   ```bash
-   ./install-gitleaks.sh
-   ```
+**Install the pre-commit hook** (git-leaks will be installed automatically if needed):
+```bash
+./install-hooks.sh
+```
 
-2. **Install the pre-commit hook**:
-   ```bash
-   ./install-hooks.sh
-   ```
+The pre-commit hook will:
+- ✅ Auto-install git-leaks if not present (Linux/macOS)
+- ✅ Scan staged files for secrets before each commit
+- ✅ Block commits containing potential secrets
+- ✅ Provide helpful guidance for fixing issues
+
+### Manual git-leaks Installation
+If you prefer to install git-leaks manually:
+- **macOS**: `brew install gitleaks`
+- **Linux**: Download from [GitHub releases](https://github.com/gitleaks/gitleaks/releases)
+- **Windows**: `winget install gitleaks`
 
 ### Local Secret Scanning
 - **Full repository scan**: `gitleaks detect --config=.gitleaks.toml`
@@ -166,8 +173,8 @@ This project includes multiple specialized GitHub Actions workflows:
 ### Configuration Files
 - **`.gitleaks.toml`**: Custom git-leaks configuration for ESP8266/IoT projects
 - **`.gitignore`**: Enhanced protection against committing sensitive files
-- **`install-gitleaks.sh`**: Automated git-leaks installation script
-- **`install-hooks.sh`**: Pre-commit hook installation script
+- **`install-hooks.sh`**: Pre-commit hook installation script (includes auto git-leaks setup)
+- **`.github/pre-commit-hook.sh`**: The actual pre-commit hook with git-leaks integration
 
 ## License
 This project is open source, under MIT license.

@@ -20,7 +20,12 @@ chmod +x .git/hooks/pre-commit
 
 echo "✅ Pre-commit hook installed successfully!"
 echo ""
-echo "The hook will now run automatically before each commit to check for secrets."
+echo "The hook will now:"
+echo "  🔧 Auto-install git-leaks if needed (Linux/macOS)"
+echo "  🔍 Scan staged files for secrets before each commit"
+echo "  🚫 Block commits containing potential secrets"
+echo "  💡 Provide helpful guidance for fixing issues"
+echo ""
 echo "To test it, try committing a file with a real password and see it get blocked."
 echo ""
 echo "To bypass the hook (NOT RECOMMENDED), use: git commit --no-verify"
