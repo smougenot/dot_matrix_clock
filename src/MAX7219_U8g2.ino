@@ -40,6 +40,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <NTPClient.h>
+#include <Timezone.h>    // https://github.com/JChristensen/Timezone
 
 #define DEBUG_NTPClient 1
 
@@ -79,7 +80,13 @@
 U8G2_MAX7219_32X8_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ PIN_CLOCK, /* data=*/ PIN_DATA, /* cs=*/ PIN_CS, /* dc=*/ U8X8_PIN_NONE, /* reset=*/ U8X8_PIN_NONE);
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+// Set to GMT
+NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 0, 60*60*1000);
+
+// Central European Time (Frankfurt, Paris)
+TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     // Central European Summer Time
+TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};       // Central European Standard Time
+Timezone CE(CEST, CET);
 
 void wifiInit() {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -88,7 +95,7 @@ void wifiInit() {
   while ( WiFi.status() != WL_CONNECTED ) {
     delay ( 500 );
     Serial.print ( "." );
-    if(cpt++ % 10 == 0){
+    if(++cpt % 10 == 0){
       Serial.print(WiFi.status());
       if(cpt % 100 == 0){
         Serial.println();
@@ -116,6 +123,8 @@ void checkDisplay(uint16 pause) {
 
 void setup(void) {
   Serial.begin(115200);
+
+  Serial.println("");
   Serial.print("Init on pin:");
   Serial.print(" Clock = ");
   Serial.print(PIN_CLOCK);
@@ -126,7 +135,7 @@ void setup(void) {
   Serial.println("");
 
   u8g2.begin();
-  u8g2.setContrast(5*1);
+  u8g2.setContrast(0); // 0 to 10
   u8g2.setFont(u8g2_font_victoriabold8_8r);	// choose a suitable font
   
   Serial.println("Test display");
@@ -155,21 +164,17 @@ String buildTimeDisplay(unsigned long rawTime) {
   return hoursStr + minuteStr;
 }
 
-uint8_t contrast = 0;
-uint8_t increment = 10;
-uint8_t last_seconds = -1;
-
 void loop(void) {
   if(WiFi.status() != WL_CONNECTED) {
     wifiInit();
   }
+  
   timeClient.update();
+  setTime(timeClient.getEpochTime());
   Serial.print(timeClient.getFormattedTime());
-  Serial.print(" contrast ");
-  Serial.print(contrast);
   Serial.println();
   
-  String timeToDisplay = buildTimeDisplay(timeClient.getEpochTime());
+  String timeToDisplay = buildTimeDisplay(CE.toLocal(now()));
   
   int16_t bar_pos;
   int16_t seconds = timeClient.getSeconds();
@@ -179,20 +184,11 @@ void loop(void) {
     bar_pos = DISPLAY_SECONDS_OFFSET + seconds;
   }
  
-
-  u8g2.setContrast(contrast);
   u8g2.clearBuffer();					// clear the internal memory
   u8g2.drawStr(0,7,timeToDisplay.c_str());			// write something to the internal memory
   u8g2.drawPixel(bar_pos, DISPLAY_HEIGHT - 1);
   u8g2.sendBuffer();					// transfer internal memory to the display
 
-  if(seconds%5 == 0 && last_seconds != seconds){
-    contrast += increment;
-    last_seconds = seconds;
-    if(0== contrast || contrast == 100) {
-      increment = -increment;
-    }
-  }
   delay(200);  
 }
 
