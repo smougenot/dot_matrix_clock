@@ -80,8 +80,7 @@
 U8G2_MAX7219_32X8_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ PIN_CLOCK, /* data=*/ PIN_DATA, /* cs=*/ PIN_CS, /* dc=*/ U8X8_PIN_NONE, /* reset=*/ U8X8_PIN_NONE);
 
 WiFiUDP ntpUDP;
-// Set to GMT
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 0, 60*60*1000);
+NTPClient timeClient(ntpUDP, NTP_SERVER, GMT_OFFSET_SEC, 60000);
 
 // Central European Time (Frankfurt, Paris)
 TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     // Central European Summer Time
