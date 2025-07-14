@@ -35,56 +35,56 @@ This project uses an ESP8266 board to control an LED matrix via the MAX7219 modu
 
 ## Configuration
 
-### Configuration WiFi et NTP - Système Native PlatformIO
+### WiFi and NTP Configuration - Native PlatformIO System
 
-Ce projet utilise un **système de configuration moderne et simplifié** qui charge dynamiquement vos paramètres depuis un fichier `.env` directement via PlatformIO, **sans script Python complexe**.
+This project uses a **modern and simplified configuration system** that dynamically loads your settings from a `.env` file directly via PlatformIO, **without complex Python scripts**.
 
-#### ✅ Avantages de cette approche
-- **Native PlatformIO** : Utilise les capacités intégrées de PlatformIO
-- **Sécurisé** : Le fichier `.env` est ignoré par git (vos credentials restent locaux)
-- **Simple** : Aucun script externe, juste un fichier de configuration
-- **Flexible** : Valeurs par défaut si pas de `.env`, personnalisation facile
+#### ✅ Advantages of this approach
+- **Native PlatformIO**: Uses PlatformIO's built-in capabilities
+- **Secure**: The `.env` file is ignored by git (your credentials stay local)
+- **Simple**: No external scripts, just a configuration file
+- **Flexible**: Default values if no `.env`, easy customization
 
-#### 🚀 Configuration rapide
+#### 🚀 Quick Configuration
 
-1. **Copier le fichier d'exemple** :
+1. **Copy the example file**:
    ```bash
    cp .env.example .env
    ```
 
-2. **Éditer vos paramètres** dans `.env` :
+2. **Edit your settings** in `.env`:
    ```bash
    # PlatformIO Environment Variables
    # WiFi Configuration
-   -D WIFI_SSID=\"VotreReseauWiFi\"
-   -D WIFI_PASSWORD=\"VotreMotDePasse\"
+   -D WIFI_SSID=\"YourWiFiNetwork\"
+   -D WIFI_PASSWORD=\"YourPassword\"
    -D NTP_SERVER=\"europe.pool.ntp.org\"
    -D GMT_OFFSET_SEC=3600
    ```
 
-3. **Compiler et uploader** :
+3. **Compile and upload**:
    ```bash
    pio run --target upload
    ```
 
-#### 🔧 Comment ça fonctionne
+#### 🔧 How it works
 
-**PlatformIO Integration** (`platformio.ini`) :
+**PlatformIO Integration** (`platformio.ini`):
 ```ini
 [env:nodemcuv2]
 platform = espressif8266
 board = nodemcuv2  
 framework = arduino
 lib_deps = ...
-; Charge dynamiquement les build flags depuis .env
-build_flags = !cat .env | grep -v '^#'
+; Dynamically loads build flags from .env file if it exists
+build_flags = !test -f .env && cat .env | grep -v '^#' || echo ""
 ```
 
-**Code Source** (`src/MAX7219_U8g2.ino`) :
+**Source Code** (`src/MAX7219_U8g2.ino`):
 ```cpp
-// Les build flags deviennent automatiquement des macros C++
+// Build flags automatically become C++ macros
 #ifndef WIFI_SSID
-#define WIFI_SSID "YOUR_WIFI_SSID"    // Valeur par défaut
+#define WIFI_SSID "YOUR_WIFI_SSID"    // Default value
 #endif
 
 #ifndef WIFI_PASSWORD  
@@ -100,24 +100,24 @@ build_flags = !cat .env | grep -v '^#'
 #endif
 ```
 
-#### 📋 Valeurs par défaut (si pas de `.env`)
+#### 📋 Default values (if no `.env`)
 - **WIFI_SSID**: `"YOUR_WIFI_SSID"`
 - **WIFI_PASSWORD**: `"YOUR_WIFI_PASSWORD"`  
 - **NTP_SERVER**: `"europe.pool.ntp.org"`
 - **GMT_OFFSET_SEC**: `3600` (GMT+1)
 
-#### 🛠️ Commandes utiles
+#### 🛠️ Useful Commands
 ```bash
-# Build standard
+# Standard build
 pio run
 
-# Upload sur l'ESP8266
+# Upload to ESP8266
 pio run --target upload
 
 # Clean + rebuild  
 pio run --target clean && pio run
 
-# Monitor série
+# Serial monitor
 pio device monitor
 ```
 
