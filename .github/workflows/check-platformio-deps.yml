@@ -19,11 +19,12 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: 'requirements.txt'
         
-    - name: Install PlatformIO
-      run: |
-        pip install platformio
-        
+    - name: Install Python Dependencies
+      run: pip install -r requirements.txt
+
     - name: List current library versions
       run: |
         echo "## Current Library Versions" >> $GITHUB_STEP_SUMMARY
