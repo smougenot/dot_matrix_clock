@@ -71,7 +71,7 @@ Connect the MAX7219 module to your ESP8266 (NodeMCU v2) as follows:
 
 | MAX7219 Pin | ESP8266 Pin | NodeMCU Pin | Description |
 |-------------|-------------|-------------|-------------|
-| VCC         | 5V          | Vin         | Power supply (3.3V) |
+| VCC         | 3.3V        | 3V          | Power supply (3.3V) |
 | GND         | GND         | GND         | Ground |
 | DIN         | GPIO13      | D7          | Data input (MOSI) |
 | CS          | GPIO12      | D6          | Chip select |
