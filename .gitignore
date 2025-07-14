@@ -1,2 +1,12 @@
 .pio
 .vscode
+
+# Environment files with secrets
+.env
+
+# Configuration files with secrets
+include/config.h
+
+# OS files
+.DS_Store
+Thumbs.db

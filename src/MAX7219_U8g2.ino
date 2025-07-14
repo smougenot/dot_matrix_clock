@@ -43,6 +43,23 @@
 
 #define DEBUG_NTPClient 1
 
+// WiFi Configuration - use build flags or default values
+#ifndef WIFI_SSID
+#define WIFI_SSID "YOUR_WIFI_SSID"
+#endif
+
+#ifndef WIFI_PASSWORD  
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#endif
+
+#ifndef NTP_SERVER
+#define NTP_SERVER "europe.pool.ntp.org"
+#endif
+
+#ifndef GMT_OFFSET_SEC
+#define GMT_OFFSET_SEC 3600
+#endif
+
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
 #endif
@@ -61,15 +78,11 @@
 
 U8G2_MAX7219_32X8_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ PIN_CLOCK, /* data=*/ PIN_DATA, /* cs=*/ PIN_CS, /* dc=*/ U8X8_PIN_NONE, /* reset=*/ U8X8_PIN_NONE);
 
-
-const char *ssid     = "Livebox-072F";
-const char *password = "22A94E64662757F8C71E8637A2";
-
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+NTPClient timeClient(ntpUDP, NTP_SERVER, GMT_OFFSET_SEC, 60000);
 
 void wifiInit() {
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   uint8_t cpt = 1;
   while ( WiFi.status() != WL_CONNECTED ) {
