@@ -30,6 +30,7 @@ jobs:
       with:
         path: ~/.platformio/.cache
         key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
+        restore-keys: ${{ runner.os }}-platformio-
 
     - name: List current library versions
       run: |
