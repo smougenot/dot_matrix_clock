@@ -12,20 +12,23 @@ jobs:
     name: Build ESP8266 Project
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/cache@v4
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
-          
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          
-      - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
+        
+      - name: Install Python Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify PlatformIO Installation
+        run: pio --version
 
       - name: Build PlatformIO Project
         run: pio run

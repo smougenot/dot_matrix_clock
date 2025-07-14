@@ -19,7 +19,7 @@ updates:
       prefix-development: "ci"
       include: "scope"
 
-  # Monitor Python dependencies (if any requirements.txt exists)
+  # Monitor Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -35,7 +35,5 @@ updates:
       include: "scope"
 
 # Note: PlatformIO (platformio.ini) is not natively supported by Dependabot
-# For PlatformIO library updates, consider:
-# 1. Manual updates using: pio pkg update
-# 2. Custom GitHub Action to check for updates
-# 3. Third-party tools like Renovate Bot which supports PlatformIO
+# For PlatformIO library updates, use the custom GitHub Action workflow:
+# .github/workflows/check-platformio-deps.yml
