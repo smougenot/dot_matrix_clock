@@ -10,6 +10,7 @@ This project uses an ESP8266 board to control an LED matrix via the MAX7219 modu
 - `lib/` : Additional libraries.
 - `include/` : Header files.
 - `test/` : Unit or integration tests.
+- `assets/` : Images and documentation resources.
 - `platformio.ini` : PlatformIO configuration with dynamic build flags.
 - `.env.example` : Template for environment configuration.
 - `.env` : Your local WiFi/NTP configuration (gitignored for security).
@@ -30,6 +31,7 @@ This project uses an ESP8266 board to control an LED matrix via the MAX7219 modu
    ```bash
    pio run --target upload
    ```
+6. **Optional** : Print the [3D enclosure](https://www.printables.com/model/1354766-simple-clock-with-4-blocks-of-8x8-dot-matrix-with) for a professional finish!
 
 ## Configuration
 
@@ -160,6 +162,45 @@ The pin configuration is defined in the source code:
 - **Display dimensions**: 32x8 pixels (4 modules of 8x8)
 - **Module type**: MAX7219 controlled LED matrix
 - **Communication**: SPI (Software SPI implementation)
+
+## 3D Printed Enclosure
+
+This project includes a **custom 3D printed enclosure** to create an elegant and compact clock with your LED matrix display.
+
+### 🖨️ 3D Model Available
+
+**Printables Link**: [Simple Clock with 4 blocks of 8x8 dot matrix](https://www.printables.com/model/1354766-simple-clock-with-4-blocks-of-8x8-dot-matrix-with)
+
+### 📐 Enclosure Features
+
+- **Compact design**: Perfectly fitted for 4x MAX7219 8x8 modules
+- **Integrated support**: Built-in slots for ESP8266 (NodeMCU v2)
+- **Easy access**: Openings for USB and power connections
+- **Clean finish**: Hides cables and components
+- **Stable**: Solid base for desktop use
+
+### 🖼️ Project Preview
+
+| Front View | Display Sample |
+|------------|----------------|
+| ![Front view](assets/front.png) | ![Display sample](assets/display_sample.png) |
+
+### 🔧 Assembly Instructions
+
+1. **Print the enclosure** from [Printables](https://www.printables.com/model/1354766-simple-clock-with-4-blocks-of-8x8-dot-matrix-with)
+2. **Assemble the electronics** according to the wiring diagram above
+3. **Install in the enclosure**:
+   - Place the MAX7219 modules in their designated slots
+   - Position the ESP8266 in its compartment
+   - Route cables through the dedicated cable channels
+4. **Finalize**: Close the enclosure and connect power
+
+### 📋 Recommended Print Settings
+
+- **Filament**: PLA or PETG
+- **Layer height**: 0.2mm for good quality/speed balance
+- **Supports**: Not required (optimized design)
+- **Infill**: 15-20% sufficient
 
 ## Usage
 The source code in `src/MAX7219_U8g2.ino` shows how to initialize and display patterns on the LED matrix.
