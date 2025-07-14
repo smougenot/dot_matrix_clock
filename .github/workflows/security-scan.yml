@@ -1,0 +1,72 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  schedule:
+    # Run security scan every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  gitleaks-scan:
+    runs-on: ubuntu-latest
+    name: Gitleaks Secret Detection
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal repos.
+        with:
+          config-path: .gitleaks.toml
+
+  additional-security-checks:
+    runs-on: ubuntu-latest
+    name: Additional Security Verification
+    needs: gitleaks-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check .env files are properly ignored
+        run: |
+          echo "🔍 Checking .env file protection..."
+          
+          # Check if .env is in .gitignore
+          if ! grep -q "^\.env$" .gitignore; then
+            echo "❌ .env is not properly ignored in .gitignore"
+            exit 1
+          fi
+          
+          # Check if any .env files are tracked by git
+          if git ls-files | grep -E "\.env$" | grep -v "\.env\.example$"; then
+            echo "❌ Found .env files tracked by git:"
+            git ls-files | grep -E "\.env$" | grep -v "\.env\.example$"
+            exit 1
+          fi
+          
+          echo "✅ .env files are properly protected"
+
+      - name: Check for TODO/FIXME security items
+        run: |
+          echo "🔍 Checking for security-related TODOs..."
+          
+          security_todos=$(grep -r -i -E "(TODO|FIXME|XXX).*(password|secret|key|security|auth)" . --include="*.ino" --include="*.cpp" --include="*.h" --include="*.md" || true)
+          
+          if [ -n "$security_todos" ]; then
+            echo "⚠️  Found security-related TODOs:"
+            echo "$security_todos"
+            echo ""
+            echo "Please review these items before deployment."
+          else
+            echo "✅ No security-related TODOs found"
+          fi

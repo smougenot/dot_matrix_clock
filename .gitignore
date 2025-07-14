@@ -10,3 +10,13 @@ include/config.h
 # OS files
 .DS_Store
 Thumbs.db
+
+# Additional secret protection
+**/secrets.h
+**/credentials.*
+**/*password*
+**/*secret*
+
+# Backup files
+*.bak
+*.backup

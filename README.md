@@ -93,5 +93,84 @@ The pin configuration is defined in the source code:
 ## Usage
 The source code in `src/MAX7219_U8g2.ino` shows how to initialize and display patterns on the LED matrix.
 
+## Security Features
+
+This project includes comprehensive security measures to prevent accidental exposure of sensitive information:
+
+### Automated Secret Detection with gitleaks
+- **gitleaks Integration**: Fast and efficient secret scanning optimized for CI/CD pipelines
+- **Custom IoT Configuration**: Specialized rules for ESP8266/IoT projects detecting WiFi credentials, API keys, and network identifiers
+- **CI/CD Security Scan**: Automatic detection of secrets in all commits and pull requests
+- **Daily Security Scans**: Scheduled scans to catch any newly introduced secrets
+
+### Quick Setup
+**Install the pre-commit hook** (gitleaks will be installed automatically if needed):
+```bash
+./install-hooks.sh
+- ✅ Scan staged files for secrets before each commit
+- ✅ Block commits containing potential secrets
+- ✅ Provide helpful guidance for fixing issues
+
+### Manual git-leaks Installation
+If you prefer to install git-leaks manually:
+- **macOS**: `brew install gitleaks`
+- **Linux**: Download from [GitHub releases](https://github.com/gitleaks/gitleaks/releases)
+- **Windows**: `winget install gitleaks`
+
+### Local Secret Scanning
+- **Full repository scan**: `gitleaks detect --config=.gitleaks.toml`
+- **Staged files only**: `gitleaks protect --staged --config=.gitleaks.toml`
+- **Specific file**: `gitleaks detect --config=.gitleaks.toml --source=filename`
+
+### Detection Capabilities
+The git-leaks configuration automatically detects:
+- WiFi credentials (SSID/passwords)
+- API keys and authentication tokens
+- Real ISP network names (Livebox, Freebox, SFR, Orange, Bouygues)
+- MAC addresses and IP addresses
+- Long hexadecimal strings (potential encryption keys)
+- Hardcoded secrets in source files
+
+### Security Best Practices
+- ✅ Always use `.env` files for local secrets (automatically ignored by git)
+- ✅ Use placeholder values like `YOUR_WIFI_SSID` in examples
+- ✅ Review security scan results in CI/CD
+- ✅ Change any credentials that were accidentally committed
+- ✅ Use the pre-commit hook to catch issues early
+
+### CI/CD Workflows
+This project includes multiple specialized GitHub Actions workflows:
+
+#### 🔨 Build Workflow (`build-platformio.yml`)
+- **Purpose**: Fast compilation and firmware generation
+- **Triggers**: Push/PR to master branch
+- **Features**: 
+  - Caching for faster builds
+  - Artifact upload (firmware files)
+  - Focused on compilation only
+
+#### 🔒 Security Workflow (`security-scan.yml`)
+- **Purpose**: Comprehensive security scanning
+- **Triggers**: Push/PR, daily at 2 AM, manual dispatch
+- **Features**:
+  - git-leaks secret detection
+  - .env file protection verification
+  - Security TODO detection
+
+#### 🎯 Quality Assurance Workflow (`quality-assurance.yml`)
+- **Purpose**: Code quality and documentation checks
+- **Triggers**: Push/PR to master branch, manual dispatch
+- **Features**:
+  - Code style and formatting checks
+  - Documentation completeness
+  - Dependency security analysis
+  - TODO/FIXME tracking
+
+### Configuration Files
+- **`.gitleaks.toml`**: Custom git-leaks configuration for ESP8266/IoT projects
+- **`.gitignore`**: Enhanced protection against committing sensitive files
+- **`install-hooks.sh`**: Pre-commit hook installation script (includes auto git-leaks setup)
+- **`.github/pre-commit-hook.sh`**: The actual pre-commit hook with git-leaks integration
+
 ## License
 This project is open source, under MIT license.

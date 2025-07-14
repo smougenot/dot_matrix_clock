@@ -1,0 +1,138 @@
+# Git-leaks configuration file for ESP8266 IoT projects
+# https://github.com/gitleaks/gitleaks
+
+title = "ESP8266 IoT Project Security Scan"
+
+[extend]
+# Use the default gitleaks rules as a base
+useDefault = true
+
+# Custom rules for IoT/ESP8266 projects
+[[rules]]
+id = "wifi-ssid"
+description = "WiFi SSID in source code"
+regex = '''(?i)(ssid|network_name)\s*[=:]\s*["'][^"']{3,}["']'''
+tags = ["wifi", "network"]
+severity = "high"
+
+# Allowlist common placeholder values
+[rules.allowlist]
+regexes = [
+  '''YOUR_WIFI_SSID''',
+  '''WIFI_SSID_HERE''',
+  '''example''',
+  '''placeholder''',
+  '''test''',
+  '''demo'''
+]
+
+[[rules]]
+id = "wifi-password"
+description = "WiFi password in source code"
+regex = '''(?i)(password|passphrase|psk)\s*[=:]\s*["'][^"']{6,}["']'''
+tags = ["wifi", "password"]
+severity = "critical"
+
+[rules.allowlist]
+regexes = [
+  '''YOUR_WIFI_PASSWORD''',
+  '''WIFI_PASSWORD_HERE''',
+  '''password123''',
+  '''example''',
+  '''placeholder''',
+  '''test''',
+  '''demo'''
+]
+
+[[rules]]
+id = "real-network-names"
+description = "Real ISP network names that could expose location"
+regex = '''(?i)(livebox|freebox|sfr|orange|bouygues|bbox)-[a-z0-9]+'''
+tags = ["network", "location"]
+severity = "medium"
+
+[[rules]]
+id = "mac-address"
+description = "MAC addresses in source code"
+regex = '''([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})'''
+tags = ["network", "hardware"]
+severity = "medium"
+
+[[rules]]
+id = "esp8266-api-key"
+description = "API keys or tokens in ESP8266 projects"
+regex = '''(?i)(api[_-]?key|token|secret)\s*[=:]\s*["'][a-zA-Z0-9]{16,}["']'''
+tags = ["api", "secret"]
+severity = "high"
+
+[rules.allowlist]
+regexes = [
+  '''YOUR_API_KEY''',
+  '''API_KEY_HERE''',
+  '''example''',
+  '''placeholder''',
+  '''test'''
+]
+
+[[rules]]
+id = "long-hex-strings"
+description = "Long hexadecimal strings that might be encryption keys"
+regex = '''["'][a-fA-F0-9]{32,}["']'''
+tags = ["crypto", "key"]
+severity = "medium"
+
+[rules.allowlist]
+regexes = [
+  '''YOUR_KEY_HERE''',
+  '''ENCRYPTION_KEY''',
+  '''example''',
+  '''placeholder'''
+]
+
+[[rules]]
+id = "ip-addresses"
+description = "IP addresses that might expose internal network topology"
+regex = '''(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'''
+tags = ["network", "ip"]
+severity = "low"
+
+[rules.allowlist]
+regexes = [
+  '''192\.168\.''',     # Private networks are usually OK
+  '''127\.0\.0\.1''',   # Localhost
+  '''0\.0\.0\.0''',     # Default/any address
+  '''255\.255\.255\.255''', # Broadcast
+  '''8\.8\.8\.8''',     # Public DNS servers
+  '''1\.1\.1\.1'''      # Public DNS servers
+]
+
+# Global allowlist for common false positives
+[allowlist]
+description = "Global allowlist for common false positives"
+files = [
+  '''\.env\.example$''',
+  '''\.env\.template$''',
+  '''README\.md$''',
+  '''SECURITY\.md$''',
+  '''\.gitleaks\.toml$'''
+]
+
+regexes = [
+  '''example\.com''',
+  '''localhost''',
+  '''127\.0\.0\.1''',
+  '''YOUR_.*''',
+  '''REPLACE_.*''',
+  '''TODO''',
+  '''FIXME''',
+  '''XXX'''
+]
+
+paths = [
+  '''\.git/''',
+  '''node_modules/''',
+  '''\.pio/''',
+  '''\.vscode/''',
+  '''build/''',
+  '''dist/'''
+]
