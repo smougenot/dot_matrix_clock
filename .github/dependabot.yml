@@ -1,0 +1,41 @@
+# Dependabot configuration for ESP8266 Dot Matrix Project
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Monitor GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      prefix-development: "ci"
+      include: "scope"
+
+  # Monitor Python dependencies (if any requirements.txt exists)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+# Note: PlatformIO (platformio.ini) is not natively supported by Dependabot
+# For PlatformIO library updates, consider:
+# 1. Manual updates using: pio pkg update
+# 2. Custom GitHub Action to check for updates
+# 3. Third-party tools like Renovate Bot which supports PlatformIO

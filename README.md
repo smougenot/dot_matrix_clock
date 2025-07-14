@@ -278,6 +278,53 @@ This project includes multiple specialized GitHub Actions workflows:
   - Dependency security analysis
   - TODO/FIXME tracking
 
+#### 📦 Dependency Management (`check-platformio-deps.yml`)
+- **Purpose**: Monitor PlatformIO library updates
+- **Triggers**: Weekly (Mondays), manual dispatch
+- **Features**:
+  - Check for outdated PlatformIO libraries
+  - Monitor platform updates
+  - Automatic issue creation for available updates
+  - Detailed update instructions
+
+### Dependency Management
+
+This project uses multiple approaches for dependency management:
+
+#### 🤖 Automated Monitoring
+- **Dependabot**: Monitors GitHub Actions dependencies (`.github/dependabot.yml`)
+- **Custom Workflow**: Checks PlatformIO library updates weekly
+- **Security Scanning**: Analyzes dependencies for vulnerabilities
+
+#### 📚 PlatformIO Libraries
+Current dependencies in `platformio.ini`:
+```ini
+lib_deps =
+  olikraus/U8g2 @ 2.28.8           # LED matrix display library
+  arduino-libraries/NTPClient @ 3.1.0  # Network Time Protocol client
+  jchristensen/Timezone @ ~1.2.4   # Timezone handling
+```
+
+#### 🔄 Manual Updates
+```bash
+# Check for outdated libraries
+pio pkg outdated
+
+# Update all libraries
+pio pkg update
+
+# Update specific library
+pio pkg update [library-name]
+
+# Update ESP8266 platform
+pio platform update espressif8266
+```
+
+#### ⚠️ Limitations
+- **Dependabot** doesn't natively support PlatformIO
+- **Alternative**: Consider Renovate Bot for PlatformIO support
+- **Workaround**: Custom GitHub Action provides automated monitoring
+
 ### Configuration Files
 - **`.gitleaks.toml`**: Custom git-leaks configuration for ESP8266/IoT projects
 - **`.gitignore`**: Enhanced protection against committing sensitive files
