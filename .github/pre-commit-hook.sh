@@ -34,7 +34,8 @@ fi
 
 # Function to check for .env files being committed
 check_env_files() {
-    env_files=$(git diff --cached --name-only | grep -E '\.env$' | grep -v '\.env\.example$' || true)
+    # Only check for added or modified .env files, not deleted ones
+    env_files=$(git diff --cached --name-only --diff-filter=AM | grep -E '\.env$' | grep -v '\.env\.example$' || true)
     
     if [ -n "$env_files" ]; then
         echo -e "${RED}❌ Attempting to commit .env files:${NC}"
