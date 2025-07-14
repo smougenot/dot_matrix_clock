@@ -10,7 +10,9 @@ This project uses an ESP8266 board to control an LED matrix via the MAX7219 modu
 - `lib/` : Additional libraries.
 - `include/` : Header files.
 - `test/` : Unit or integration tests.
-- `platformio.ini` : PlatformIO configuration.
+- `platformio.ini` : PlatformIO configuration with dynamic build flags.
+- `.env.example` : Template for environment configuration.
+- `.env` : Your local WiFi/NTP configuration (gitignored for security).
 
 ## Quick Start
 1. Install [PlatformIO](https://platformio.org/install).
@@ -31,38 +33,107 @@ This project uses an ESP8266 board to control an LED matrix via the MAX7219 modu
 
 ## Configuration
 
-### WiFi and Secrets Management with PlatformIO
-The project offers flexible configuration methods to set your WiFi credentials and NTP server settings:
+### Configuration WiFi et NTP - Système Native PlatformIO
 
-#### Default Configuration (No Setup Required)
-The project will compile and run with default placeholder values:
-- **WIFI_SSID**: "YOUR_WIFI_SSID"  
-- **WIFI_PASSWORD**: "YOUR_WIFI_PASSWORD"
-- **NTP_SERVER**: "europe.pool.ntp.org"
-- **GMT_OFFSET_SEC**: 3600
+Ce projet utilise un **système de configuration moderne et simplifié** qui charge dynamiquement vos paramètres depuis un fichier `.env` directement via PlatformIO, **sans script Python complexe**.
 
-#### Custom Configuration via Environment Variables
-For personalized configuration, copy the environment template and edit it with your credentials:
+#### ✅ Avantages de cette approche
+- **Native PlatformIO** : Utilise les capacités intégrées de PlatformIO
+- **Sécurisé** : Le fichier `.env` est ignoré par git (vos credentials restent locaux)
+- **Simple** : Aucun script externe, juste un fichier de configuration
+- **Flexible** : Valeurs par défaut si pas de `.env`, personnalisation facile
 
-1. **Copy the example environment file**:
+#### 🚀 Configuration rapide
+
+1. **Copier le fichier d'exemple** :
    ```bash
    cp .env.example .env
    ```
 
-2. **Edit your configuration** in `.env` (note the escaped quotes):
+2. **Éditer vos paramètres** dans `.env` :
    ```bash
-   PLATFORMIO_BUILD_FLAGS=-DWIFI_SSID=\\"Your_WiFi_Network\\" -DWIFI_PASSWORD=\\"Your_WiFi_Password\\" -DNTP_SERVER=\\"europe.pool.ntp.org\\" -DGMT_OFFSET_SEC=3600
+   # PlatformIO Environment Variables
+   # WiFi Configuration
+   -D WIFI_SSID=\"VotreReseauWiFi\"
+   -D WIFI_PASSWORD=\"VotreMotDePasse\"
+   -D NTP_SERVER=\"europe.pool.ntp.org\"
+   -D GMT_OFFSET_SEC=3600
    ```
 
-3. **Security**: The `.env` file is ignored by git, so your credentials won't be committed.
+3. **Compiler et uploader** :
+   ```bash
+   pio run --target upload
+   ```
 
-#### Build Commands
-- **Default build**: `pio run` (uses default values or `.env` file if present)
-- **Upload**: `pio run --target upload`
+#### 🔧 Comment ça fonctionne
 
-#### Alternative Configuration Methods
-- **Command line**: `PLATFORMIO_BUILD_FLAGS="-DWIFI_SSID=\\"MyNetwork\\"" pio run`
-- **GitHub Secrets**: For CI/CD, use repository secrets and environment variables
+**PlatformIO Integration** (`platformio.ini`) :
+```ini
+[env:nodemcuv2]
+platform = espressif8266
+board = nodemcuv2  
+framework = arduino
+lib_deps = ...
+; Charge dynamiquement les build flags depuis .env
+build_flags = !cat .env | grep -v '^#'
+```
+
+**Code Source** (`src/MAX7219_U8g2.ino`) :
+```cpp
+// Les build flags deviennent automatiquement des macros C++
+#ifndef WIFI_SSID
+#define WIFI_SSID "YOUR_WIFI_SSID"    // Valeur par défaut
+#endif
+
+#ifndef WIFI_PASSWORD  
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#endif
+
+#ifndef NTP_SERVER
+#define NTP_SERVER "europe.pool.ntp.org"
+#endif
+
+#ifndef GMT_OFFSET_SEC
+#define GMT_OFFSET_SEC 3600
+#endif
+```
+
+#### 📋 Valeurs par défaut (si pas de `.env`)
+- **WIFI_SSID**: `"YOUR_WIFI_SSID"`
+- **WIFI_PASSWORD**: `"YOUR_WIFI_PASSWORD"`  
+- **NTP_SERVER**: `"europe.pool.ntp.org"`
+- **GMT_OFFSET_SEC**: `3600` (GMT+1)
+
+#### 🛠️ Commandes utiles
+```bash
+# Build standard
+pio run
+
+# Upload sur l'ESP8266
+pio run --target upload
+
+# Clean + rebuild  
+pio run --target clean && pio run
+
+# Monitor série
+pio device monitor
+```
+
+4. **Environment File Format** (`.env`):
+   ```bash
+   # Simple key=value format (no quotes needed)
+   WIFI_SSID=MyNetwork
+   WIFI_PASSWORD=MyPassword123
+   NTP_SERVER=pool.ntp.org
+   GMT_OFFSET_SEC=3600
+   ```
+
+This approach provides several advantages:
+- ✅ **Secure**: No credentials in source code or git history
+- ✅ **Automatic**: Works without manual intervention
+- ✅ **Robust**: Falls back to safe defaults
+- ✅ **Cross-platform**: Pure Python, works on Windows/Linux/macOS
+- ✅ **CI/CD Friendly**: Compatible with GitHub Actions and automation
 
 ## Hardware Wiring
 

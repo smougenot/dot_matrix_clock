@@ -88,6 +88,10 @@ TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};       // Central European 
 Timezone CE(CEST, CET);
 
 void wifiInit() {
+  Serial.println();
+  Serial.print("Looking for Wifi : ");
+  Serial.print(WIFI_SSID);
+  Serial.println();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   uint8_t cpt = 1;
@@ -134,7 +138,7 @@ void setup(void) {
   Serial.println("");
 
   u8g2.begin();
-  u8g2.setContrast(0); // 0 to 10
+  u8g2.setContrast(255); //Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
   u8g2.setFont(u8g2_font_victoriabold8_8r);	// choose a suitable font
   
   Serial.println("Test display");
@@ -149,6 +153,8 @@ void setup(void) {
   Serial.println("activating time client");
   timeClient.begin();
   timeClient.update();
+
+  u8g2.setContrast(20); //Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
 
   Serial.println("setup done");
  }
