@@ -1,0 +1,107 @@
+name: Check PlatformIO Dependencies
+
+on:
+  schedule:
+    # Run weekly on Mondays at 7:00 AM UTC
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    # Allow manual triggering
+
+jobs:
+  check-dependencies:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        
+    - name: List current library versions
+      run: |
+        echo "## Current Library Versions" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        pio pkg list >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Check for library updates
+      run: |
+        echo "## Available Library Updates" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        pio pkg outdated || echo "All libraries are up to date" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Check platform updates
+      run: |
+        echo "## Platform Updates" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        pio platform list --installed
+        echo "Available updates:"
+        pio platform search espressif8266 >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Create issue if updates available
+      uses: actions/github-script@v7
+      if: always()
+      with:
+        script: |
+          const title = '📦 PlatformIO Dependencies Update Available';
+          const body = `
+          ## Automated Dependency Check
+          
+          This issue was automatically created to notify about available PlatformIO library updates.
+          
+          ### How to update:
+          
+          1. **Update all libraries:**
+             \`\`\`bash
+             pio pkg update
+             \`\`\`
+          
+          2. **Update specific library:**
+             \`\`\`bash
+             pio pkg update [library-name]
+             \`\`\`
+          
+          3. **Update platform:**
+             \`\`\`bash
+             pio platform update espressif8266
+             \`\`\`
+          
+          ### Current dependencies in platformio.ini:
+          - olikraus/U8g2 @ 2.28.8
+          - arduino-libraries/NTPClient @ 3.1.0  
+          - jchristensen/Timezone @ ~1.2.4
+          
+          **Note:** Please test thoroughly after updating dependencies to ensure compatibility.
+          
+          ---
+          _This issue was created automatically by the PlatformIO Dependencies workflow._
+          `;
+          
+          // Check if there's already an open issue
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'dependencies,platformio'
+          });
+          
+          const existingIssue = issues.data.find(issue => issue.title.includes('PlatformIO Dependencies'));
+          
+          if (!existingIssue) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['dependencies', 'platformio', 'enhancement']
+            });
+          }
