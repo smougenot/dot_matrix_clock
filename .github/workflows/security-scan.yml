@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  secret-detection:
+  gitleaks-scan:
     runs-on: ubuntu-latest
-    name: Secret Detection & Security Scan
+    name: Gitleaks Secret Detection
     
     steps:
       - name: Checkout code
@@ -21,77 +21,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run TruffleHog OSS Secret Scanner
-        uses: trufflesecurity/trufflehog@main
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal repos.
         with:
-          path: ./
-          base: main
-          head: HEAD
-          extra_args: --debug --only-verified --fail
+          config-path: .gitleaks.toml
 
-      - name: Custom Secret Pattern Detection
-        run: |
-          echo "🔍 Running custom secret detection patterns..."
-          
-          # Function to check files and report findings
-          check_secrets() {
-            local pattern="$1"
-            local description="$2"
-            local files="$3"
-            
-            echo "Checking for: $description"
-            if find . -name "$files" -type f -exec grep -H -E "$pattern" {} \; 2>/dev/null | grep -v ".git" | grep -v "YOUR_" | grep -v "example" | grep -v "placeholder"; then
-              echo "❌ Found $description"
-              return 1
-            else
-              echo "✅ No $description found"
-              return 0
-            fi
-          }
-          
-          # Track if any secrets were found
-          secrets_found=0
-          
-          # Check for WiFi credentials (avoiding placeholders)
-          if ! check_secrets "(ssid|password|SSID|PASSWORD)\s*[=:]\s*['\"][^'\"]{3,}['\"]" "WiFi credentials" "*.ino *.cpp *.h *.c"; then
-            secrets_found=1
-          fi
-          
-          # Check for API keys and tokens
-          if ! check_secrets "(api[_-]?key|token|secret)['\"]?\s*[=:]\s*['\"][a-zA-Z0-9]{16,}['\"]" "API keys or tokens" "*"; then
-            secrets_found=1
-          fi
-          
-          # Check for specific network identifiers
-          if ! check_secrets "(Livebox|Freebox|SFR|Orange|Bouygues)-[A-Z0-9]+" "Real network names" "*.ino *.cpp *.h *.c"; then
-            secrets_found=1
-          fi
-          
-          # Check for MAC addresses
-          if ! check_secrets "[0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}" "MAC addresses" "*.ino *.cpp *.h *.c"; then
-            secrets_found=1
-          fi
-          
-          # Check for IP addresses (excluding common defaults)
-          if ! check_secrets "([0-9]{1,3}\.){3}[0-9]{1,3}" "IP addresses" "*.ino *.cpp *.h *.c" | grep -v "192.168" | grep -v "127.0.0.1" | grep -v "0.0.0.0"; then
-            secrets_found=1
-          fi
-          
-          # Check for long hexadecimal strings (potential keys)
-          if ! check_secrets "['\"][a-fA-F0-9]{20,}['\"]" "Long hexadecimal strings (potential keys)" "*.ino *.cpp *.h *.c"; then
-            secrets_found=1
-          fi
-          
-          if [ $secrets_found -eq 1 ]; then
-            echo ""
-            echo "❌ Security scan failed: Potential secrets detected!"
-            echo "Please review the findings above and remove any real credentials."
-            echo "Use placeholder values like 'YOUR_WIFI_SSID' instead."
-            exit 1
-          else
-            echo ""
-            echo "✅ Security scan passed: No secrets detected!"
-          fi
+  additional-security-checks:
+    runs-on: ubuntu-latest
+    name: Additional Security Verification
+    needs: gitleaks-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Check .env files are properly ignored
         run: |

@@ -97,25 +97,36 @@ The source code in `src/MAX7219_U8g2.ino` shows how to initialize and display pa
 
 This project includes comprehensive security measures to prevent accidental exposure of sensitive information:
 
-### Automated Secret Detection
+### Automated Secret Detection with git-leaks
+- **git-leaks Integration**: Fast and efficient secret scanning optimized for CI/CD pipelines
+- **Custom IoT Configuration**: Specialized rules for ESP8266/IoT projects detecting WiFi credentials, API keys, and network identifiers
 - **CI/CD Security Scan**: Automatic detection of secrets in all commits and pull requests
-- **TruffleHog Integration**: Industry-standard secret scanning tool
-- **Custom Pattern Detection**: Specific checks for WiFi credentials, API keys, and network identifiers
 - **Daily Security Scans**: Scheduled scans to catch any newly introduced secrets
 
-### Pre-commit Protection
-Install the pre-commit hook to catch secrets before they're committed:
+### Quick Setup
+1. **Install git-leaks locally**:
+   ```bash
+   ./install-gitleaks.sh
+   ```
 
-```bash
-./install-hooks.sh
-```
+2. **Install the pre-commit hook**:
+   ```bash
+   ./install-hooks.sh
+   ```
 
-This will automatically scan your files for:
+### Local Secret Scanning
+- **Full repository scan**: `gitleaks detect --config=.gitleaks.toml`
+- **Staged files only**: `gitleaks protect --staged --config=.gitleaks.toml`
+- **Specific file**: `gitleaks detect --config=.gitleaks.toml --source=filename`
+
+### Detection Capabilities
+The git-leaks configuration automatically detects:
 - WiFi credentials (SSID/passwords)
-- API keys and tokens
-- Real network names (Livebox, Freebox, etc.)
+- API keys and authentication tokens
+- Real ISP network names (Livebox, Freebox, SFR, Orange, Bouygues)
 - MAC addresses and IP addresses
 - Long hexadecimal strings (potential encryption keys)
+- Hardcoded secrets in source files
 
 ### Security Best Practices
 - ✅ Always use `.env` files for local secrets (automatically ignored by git)
@@ -124,10 +135,39 @@ This will automatically scan your files for:
 - ✅ Change any credentials that were accidentally committed
 - ✅ Use the pre-commit hook to catch issues early
 
-### Security Workflows
-- **Build workflow**: Includes secret detection before building
-- **Security scan workflow**: Dedicated security checks with detailed reporting
-- **Pre-commit hook**: Local protection before commits reach the repository
+### CI/CD Workflows
+This project includes multiple specialized GitHub Actions workflows:
+
+#### 🔨 Build Workflow (`build-platformio.yml`)
+- **Purpose**: Fast compilation and firmware generation
+- **Triggers**: Push/PR to master branch
+- **Features**: 
+  - Caching for faster builds
+  - Artifact upload (firmware files)
+  - Focused on compilation only
+
+#### 🔒 Security Workflow (`security-scan.yml`)
+- **Purpose**: Comprehensive security scanning
+- **Triggers**: Push/PR, daily at 2 AM, manual dispatch
+- **Features**:
+  - git-leaks secret detection
+  - .env file protection verification
+  - Security TODO detection
+
+#### 🎯 Quality Assurance Workflow (`quality-assurance.yml`)
+- **Purpose**: Code quality and documentation checks
+- **Triggers**: Push/PR to master branch, manual dispatch
+- **Features**:
+  - Code style and formatting checks
+  - Documentation completeness
+  - Dependency security analysis
+  - TODO/FIXME tracking
+
+### Configuration Files
+- **`.gitleaks.toml`**: Custom git-leaks configuration for ESP8266/IoT projects
+- **`.gitignore`**: Enhanced protection against committing sensitive files
+- **`install-gitleaks.sh`**: Automated git-leaks installation script
+- **`install-hooks.sh`**: Pre-commit hook installation script
 
 ## License
 This project is open source, under MIT license.

@@ -1,8 +1,8 @@
 #!/bin/bash
-# Pre-commit hook to detect secrets in committed files
+# Pre-commit hook to detect secrets in committed files using git-leaks
 # Place this file in .git/hooks/pre-commit and make it executable
 
-echo "🔍 Running pre-commit secret detection..."
+echo "🔍 Running pre-commit secret detection with git-leaks..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -10,56 +10,29 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Function to check for secrets in staged files
-check_secrets_in_staged_files() {
-    # Get list of staged files
-    staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ino|cpp|h|c|py|js|ts|yml|yaml|json)$' || true)
+# Check if git-leaks is installed
+if ! command -v gitleaks &> /dev/null; then
+    echo -e "${YELLOW}⚠️  git-leaks not found. Installing...${NC}"
     
-    if [ -z "$staged_files" ]; then
-        echo -e "${GREEN}✅ No relevant files staged for commit${NC}"
-        return 0
+    # Try to install git-leaks
+    if command -v brew &> /dev/null; then
+        brew install gitleaks
+    elif command -v apt-get &> /dev/null; then
+        # For Ubuntu/Debian - download binary
+        GITLEAKS_VERSION="8.18.0"
+        wget "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -O /tmp/gitleaks.tar.gz
+        tar -xzf /tmp/gitleaks.tar.gz -C /tmp/
+        sudo mv /tmp/gitleaks /usr/local/bin/
+        rm /tmp/gitleaks.tar.gz
+    else
+        echo -e "${RED}❌ Could not install git-leaks automatically. Please install manually:${NC}"
+        echo "  - GitHub: https://github.com/gitleaks/gitleaks"
+        echo "  - or run: brew install gitleaks"
+        exit 1
     fi
-    
-    echo "Checking staged files: $staged_files"
-    
-    secrets_found=0
-    
-    # Check each staged file
-    for file in $staged_files; do
-        if [ -f "$file" ]; then
-            echo "Checking $file..."
-            
-            # Check for WiFi credentials
-            if git show :$file | grep -E "(ssid|password|SSID|PASSWORD)\s*[=:]\s*['\"][^'\"]{3,}['\"]" | grep -v "YOUR_" | grep -v "example" | grep -v "placeholder" >/dev/null 2>&1; then
-                echo -e "${RED}❌ Found potential WiFi credentials in $file${NC}"
-                git show :$file | grep -E "(ssid|password|SSID|PASSWORD)\s*[=:]\s*['\"][^'\"]{3,}['\"]" | grep -v "YOUR_" | grep -v "example"
-                secrets_found=1
-            fi
-            
-            # Check for API keys
-            if git show :$file | grep -E "(api[_-]?key|token|secret)['\"]?\s*[=:]\s*['\"][a-zA-Z0-9]{16,}['\"]" >/dev/null 2>&1; then
-                echo -e "${RED}❌ Found potential API key/token in $file${NC}"
-                secrets_found=1
-            fi
-            
-            # Check for real network names
-            if git show :$file | grep -E "(Livebox|Freebox|SFR|Orange|Bouygues)-[A-Z0-9]+" >/dev/null 2>&1; then
-                echo -e "${RED}❌ Found real network name in $file${NC}"
-                secrets_found=1
-            fi
-            
-            # Check for long hex strings (potential keys)
-            if git show :$file | grep -E "['\"][a-fA-F0-9]{20,}['\"]" | grep -v "YOUR_" >/dev/null 2>&1; then
-                echo -e "${YELLOW}⚠️  Found long hex string in $file (potential key)${NC}"
-                secrets_found=1
-            fi
-        fi
-    done
-    
-    return $secrets_found
-}
+fi
 
-# Check for .env files being committed
+# Function to check for .env files being committed
 check_env_files() {
     env_files=$(git diff --cached --name-only | grep -E '\.env$' | grep -v '\.env\.example$' || true)
     
@@ -73,16 +46,75 @@ check_env_files() {
     return 0
 }
 
+# Run git-leaks on staged files
+run_gitleaks() {
+    echo "Running git-leaks scan on staged files..."
+    
+    # Use git-leaks to scan staged files
+    if gitleaks protect --staged --config=.gitleaks.toml --verbose 2>/dev/null; then
+        echo -e "${GREEN}✅ git-leaks scan passed!${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ git-leaks detected potential secrets!${NC}"
+        echo -e "${YELLOW}💡 Run 'gitleaks protect --staged --config=.gitleaks.toml' for details${NC}"
+        return 1
+    fi
+}
+
+# Additional quick checks for common IoT secrets
+quick_iot_checks() {
+    echo "Running additional IoT-specific checks..."
+    
+    # Get staged files
+    staged_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ino|cpp|h|c)$' || true)
+    
+    if [ -z "$staged_files" ]; then
+        return 0
+    fi
+    
+    secrets_found=0
+    
+    # Check each staged file for common IoT patterns
+    for file in $staged_files; do
+        if [ -f "$file" ]; then
+            # Quick check for real network names (not caught by standard patterns)
+            if git show :$file | grep -i -E "(livebox|freebox|sfr|orange|bouygues|bbox)-[a-z0-9]+" >/dev/null 2>&1; then
+                echo -e "${RED}❌ Found potential real ISP network name in $file${NC}"
+                secrets_found=1
+            fi
+            
+            # Check for hardcoded WiFi credentials that look real
+            if git show :$file | grep -E 'ssid.*=.*"[A-Za-z0-9-_]{6,}"' | grep -v -E "(YOUR_|TEST|DEMO|EXAMPLE)" >/dev/null 2>&1; then
+                echo -e "${YELLOW}⚠️  Found potential real SSID in $file${NC}"
+                secrets_found=1
+            fi
+        fi
+    done
+    
+    if [ $secrets_found -eq 1 ]; then
+        echo -e "${YELLOW}💡 Please review the findings above. Use placeholders like 'YOUR_WIFI_SSID'.${NC}"
+        return 1
+    fi
+    
+    return 0
+}
+
 # Main execution
 secrets_found=0
 
 # Check for .env files
+echo "Checking for .env files..."
 if ! check_env_files; then
     secrets_found=1
 fi
 
-# Check for secrets in staged files
-if ! check_secrets_in_staged_files; then
+# Run git-leaks
+if ! run_gitleaks; then
+    secrets_found=1
+fi
+
+# Run additional IoT checks
+if ! quick_iot_checks; then
     secrets_found=1
 fi
 
@@ -94,6 +126,7 @@ if [ $secrets_found -eq 1 ]; then
     echo -e "${YELLOW}💡 Use placeholder values like 'YOUR_WIFI_SSID' instead.${NC}"
     echo ""
     echo "To bypass this check (NOT RECOMMENDED), use: git commit --no-verify"
+    echo "To see detailed git-leaks output: gitleaks protect --staged --config=.gitleaks.toml"
     exit 1
 else
     echo -e "${GREEN}✅ Pre-commit security check passed!${NC}"
