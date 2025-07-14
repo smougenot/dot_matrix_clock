@@ -93,5 +93,41 @@ The pin configuration is defined in the source code:
 ## Usage
 The source code in `src/MAX7219_U8g2.ino` shows how to initialize and display patterns on the LED matrix.
 
+## Security Features
+
+This project includes comprehensive security measures to prevent accidental exposure of sensitive information:
+
+### Automated Secret Detection
+- **CI/CD Security Scan**: Automatic detection of secrets in all commits and pull requests
+- **TruffleHog Integration**: Industry-standard secret scanning tool
+- **Custom Pattern Detection**: Specific checks for WiFi credentials, API keys, and network identifiers
+- **Daily Security Scans**: Scheduled scans to catch any newly introduced secrets
+
+### Pre-commit Protection
+Install the pre-commit hook to catch secrets before they're committed:
+
+```bash
+./install-hooks.sh
+```
+
+This will automatically scan your files for:
+- WiFi credentials (SSID/passwords)
+- API keys and tokens
+- Real network names (Livebox, Freebox, etc.)
+- MAC addresses and IP addresses
+- Long hexadecimal strings (potential encryption keys)
+
+### Security Best Practices
+- ✅ Always use `.env` files for local secrets (automatically ignored by git)
+- ✅ Use placeholder values like `YOUR_WIFI_SSID` in examples
+- ✅ Review security scan results in CI/CD
+- ✅ Change any credentials that were accidentally committed
+- ✅ Use the pre-commit hook to catch issues early
+
+### Security Workflows
+- **Build workflow**: Includes secret detection before building
+- **Security scan workflow**: Dedicated security checks with detailed reporting
+- **Pre-commit hook**: Local protection before commits reach the repository
+
 ## License
 This project is open source, under MIT license.
