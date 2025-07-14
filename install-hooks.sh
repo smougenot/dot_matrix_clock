@@ -12,7 +12,13 @@ fi
 # Create hooks directory if it doesn't exist
 mkdir -p .git/hooks
 
-# Copy the pre-commit hook
+# Check if a pre-commit hook already exists
+if [ -f ".git/hooks/pre-commit" ]; then
+    echo "⚠️ Warning: A pre-commit hook already exists. Backing it up to .git/hooks/pre-commit.bak..."
+    mv .git/hooks/pre-commit .git/hooks/pre-commit.bak
+fi
+
+# Copy the new pre-commit hook
 cp .github/pre-commit-hook.sh .git/hooks/pre-commit
 
 # Make it executable
