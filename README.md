@@ -14,24 +14,37 @@ This project uses an ESP8266 board to control an LED matrix via the MAX7219 modu
 - `platformio.ini` : PlatformIO configuration with dynamic build flags.
 - `.env.example` : Template for environment configuration.
 - `.env` : Your local WiFi/NTP configuration (gitignored for security).
+- `requirements.txt` : Python dependencies including PlatformIO.
 
 ## Quick Start
-1. Install [PlatformIO](https://platformio.org/install).
+
+### Option 1: Using Python requirements.txt (Recommended)
+1. **Install Python dependencies** (includes PlatformIO):
+   ```bash
+   git clone <repo-url>
+   cd dot_matrix_clock
+   pip install -r requirements.txt
+   ```
+
+### Option 2: Manual PlatformIO installation
+1. Install [PlatformIO](https://platformio.org/install) manually.
 2. Clone this repository:
    ```bash
    git clone <repo-url>
    ```
-3. **Configure WiFi credentials**:
+
+### Configuration and Upload
+1. **Configure WiFi credentials**:
    ```bash
    cp .env.example .env
    ```
    Edit `.env` with your WiFi credentials and timezone settings.
-4. Open the folder in PlatformIO or VS Code.
-5. Connect the ESP8266 and upload the firmware:
+2. Open the folder in PlatformIO or VS Code.
+3. Connect the ESP8266 and upload the firmware:
    ```bash
    pio run --target upload
    ```
-6. **Optional** : Print the [3D enclosure](https://www.printables.com/model/1354766-simple-clock-with-4-blocks-of-8x8-dot-matrix-with) for a professional finish!
+4. **Optional** : Print the [3D enclosure](https://www.printables.com/model/1354766-simple-clock-with-4-blocks-of-8x8-dot-matrix-with) for a professional finish!
 
 ## Configuration
 
@@ -108,6 +121,10 @@ build_flags = !test -f .env && cat .env | grep -v '^#' || echo ""
 
 #### 🛠️ Useful Commands
 ```bash
+# Python environment setup
+pip install -r requirements.txt
+
+# PlatformIO commands
 # Standard build
 pio run
 
@@ -119,6 +136,12 @@ pio run --target clean && pio run
 
 # Serial monitor
 pio device monitor
+
+# Development tools
+flake8 .                     # Code linting
+pylint src/                  # Code analysis
+bandit -r .                  # Security scanning
+pytest                       # Run tests (if any)
 ```
 
 4. **Environment File Format** (`.env`):
@@ -257,7 +280,8 @@ This project includes multiple specialized GitHub Actions workflows:
 - **Purpose**: Fast compilation and firmware generation
 - **Triggers**: Push/PR to master branch
 - **Features**: 
-  - Caching for faster builds
+  - Optimized Python dependency caching via `actions/setup-python`
+  - Automatic installation from `requirements.txt`
   - Artifact upload (firmware files)
   - Focused on compilation only
 
@@ -292,9 +316,20 @@ This project includes multiple specialized GitHub Actions workflows:
 This project uses multiple approaches for dependency management:
 
 #### 🤖 Automated Monitoring
-- **Dependabot**: Monitors GitHub Actions dependencies (`.github/dependabot.yml`)
+- **Dependabot**: Monitors GitHub Actions and Python dependencies (`.github/dependabot.yml`)
 - **Custom Workflow**: Checks PlatformIO library updates weekly
 - **Security Scanning**: Analyzes dependencies for vulnerabilities
+
+#### 🐍 Python Dependencies
+Current dependencies in `requirements.txt`:
+```txt
+platformio>=6.1.0,<7.0.0    # ESP8266/Arduino development platform
+flake8>=6.0.0                # Code linting
+pylint>=2.17.0               # Code analysis
+bandit>=1.7.0                # Security scanning
+pytest>=7.0.0                # Testing framework
+pytest-cov>=4.0.0            # Coverage reporting
+```
 
 #### 📚 PlatformIO Libraries
 Current dependencies in `platformio.ini`:
@@ -307,25 +342,30 @@ lib_deps =
 
 #### 🔄 Manual Updates
 ```bash
-# Check for outdated libraries
-pio pkg outdated
+# Python dependencies
+pip install --upgrade -r requirements.txt
 
-# Update all libraries
-pio pkg update
-
-# Update specific library
-pio pkg update [library-name]
-
-# Update ESP8266 platform
-pio platform update espressif8266
+# PlatformIO libraries
+pio pkg outdated              # Check for outdated libraries
+pio pkg update                # Update all libraries
+pio pkg update [library-name] # Update specific library
+pio platform update espressif8266  # Update ESP8266 platform
 ```
 
+#### ✅ Current Monitoring Coverage
+- **GitHub Actions**: ✅ Monitored by Dependabot
+- **Python Dependencies**: ✅ Monitored by Dependabot (`requirements.txt`)
+- **PlatformIO Libraries**: ✅ Monitored by custom workflow
+- **Security Vulnerabilities**: ✅ Automated scanning
+
 #### ⚠️ Limitations
-- **Dependabot** doesn't natively support PlatformIO
-- **Alternative**: Consider Renovate Bot for PlatformIO support
-- **Workaround**: Custom GitHub Action provides automated monitoring
+- **PlatformIO libraries** not natively supported by Dependabot
+- **Alternative**: Consider Renovate Bot for full PlatformIO support
+- **Current Solution**: Hybrid approach (Dependabot + custom workflow)
 
 ### Configuration Files
+- **`requirements.txt`**: Python dependencies including PlatformIO and development tools
+- **`.github/dependabot.yml`**: Dependabot configuration for GitHub Actions and Python dependencies
 - **`.gitleaks.toml`**: Custom git-leaks configuration for ESP8266/IoT projects
 - **`.gitignore`**: Enhanced protection against committing sensitive files
 - **`install-hooks.sh`**: Pre-commit hook installation script (includes auto git-leaks setup)
