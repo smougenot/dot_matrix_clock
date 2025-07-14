@@ -97,20 +97,16 @@ The source code in `src/MAX7219_U8g2.ino` shows how to initialize and display pa
 
 This project includes comprehensive security measures to prevent accidental exposure of sensitive information:
 
-### Automated Secret Detection with git-leaks
-- **git-leaks Integration**: Fast and efficient secret scanning optimized for CI/CD pipelines
+### Automated Secret Detection with gitleaks
+- **gitleaks Integration**: Fast and efficient secret scanning optimized for CI/CD pipelines
 - **Custom IoT Configuration**: Specialized rules for ESP8266/IoT projects detecting WiFi credentials, API keys, and network identifiers
 - **CI/CD Security Scan**: Automatic detection of secrets in all commits and pull requests
 - **Daily Security Scans**: Scheduled scans to catch any newly introduced secrets
 
 ### Quick Setup
-**Install the pre-commit hook** (git-leaks will be installed automatically if needed):
+**Install the pre-commit hook** (gitleaks will be installed automatically if needed):
 ```bash
 ./install-hooks.sh
-```
-
-The pre-commit hook will:
-- ✅ Auto-install git-leaks if not present (Linux/macOS)
 - ✅ Scan staged files for secrets before each commit
 - ✅ Block commits containing potential secrets
 - ✅ Provide helpful guidance for fixing issues
