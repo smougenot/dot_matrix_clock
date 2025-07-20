@@ -61,6 +61,10 @@
 #define GMT_OFFSET_SEC 3600
 #endif
 
+#ifndef BRIGHTNESS
+#define BRIGHTNESS 20 // Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
+#endif
+
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
 #endif
@@ -138,7 +142,7 @@ void setup(void) {
   Serial.println("");
 
   u8g2.begin();
-  u8g2.setContrast(255); //Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
+  u8g2.setContrast(1); //Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
   u8g2.setFont(u8g2_font_victoriabold8_8r);	// choose a suitable font
   
   Serial.println("Test display");
@@ -154,7 +158,7 @@ void setup(void) {
   timeClient.begin();
   timeClient.update();
 
-  u8g2.setContrast(20); //Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
+  u8g2.setContrast(BRIGHTNESS); //Range for 'value': 0 (no contrast) to 255 (maximum contrast or brightness).
 
   Serial.println("setup done");
  }
